@@ -4,6 +4,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +14,7 @@ import java.util.List;
 @Service
 public class StockEtablissementService {
 
-    private static final int BUFFER_SIZE = 25000;
+    private static final int BUFFER_SIZE = 10000;
 
     private static final Logger logger = LoggerFactory.getLogger(StockEtablissementService.class);
     private final StockEtablissementRepository stockEtablissementRepository;
@@ -24,7 +27,21 @@ public class StockEtablissementService {
         this.buffer = new ArrayList<>();
     }
 
-    public boolean processLine(String line, List<String> fields, Integer rowLimit) {
+    public void processFile(Reader reader, List<String> fields, Integer rowLimit) throws IOException {
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String line;
+        boolean limitReached;
+
+        while ((line = bufferedReader.readLine()) != null) {
+            limitReached = processLine(line, fields, rowLimit);
+            if (limitReached) {
+                break;
+            }
+        }
+        bufferedReader.close();
+    }
+
+    private boolean processLine(String line, List<String> fields, Integer rowLimit) {
 
         if (this.isHeadersLine) {
             isHeadersLine = false;

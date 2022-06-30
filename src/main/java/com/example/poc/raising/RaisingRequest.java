@@ -5,11 +5,13 @@ import java.util.List;
 public class RaisingRequest {
 
     private List<String> fields;
+    private String mode;
     private Integer rowLimit;
     private String url;
 
-    public RaisingRequest(List<String> fields, Integer rowLimit, String url) {
+    public RaisingRequest(List<String> fields, String mode, Integer rowLimit, String url) {
         this.fields = fields;
+        this.mode = mode;
         this.rowLimit = rowLimit;
         this.url = url;
     }
@@ -36,5 +38,13 @@ public class RaisingRequest {
 
     public void setRowLimit(Integer rowLimit) {
         this.rowLimit = rowLimit;
+    }
+
+    public String getMode() {
+        return mode;
+    }
+
+    public void setMode(String mode) {
+        this.mode = mode;
     }
 }

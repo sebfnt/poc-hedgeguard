@@ -1,14 +1,16 @@
 package com.example.poc.raising;
 
 import com.example.poc.stockEtablissement.StockEtablissementService;
+import com.example.poc.stockEtablissement.StockEtablissementStreamService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -19,8 +21,11 @@ public class RaisingService {
 
     private final StockEtablissementService stockEtablissementService;
 
-    public RaisingService(StockEtablissementService stockEtablissementService) {
+    private final StockEtablissementStreamService stockEtablissementStreamService;
+
+    public RaisingService(StockEtablissementService stockEtablissementService, StockEtablissementStreamService stockEtablissementStreamService) {
         this.stockEtablissementService = stockEtablissementService;
+        this.stockEtablissementStreamService = stockEtablissementStreamService;
     }
 
     public void raiseDataFromUrl(RaisingRequest raisingRequest) throws IOException {
@@ -34,11 +39,18 @@ public class RaisingService {
             while ((zipEntry = zipInputStream.getNextEntry()) != null) {
                 logger.info("Service : File found at URL : " + zipEntry.getName());
 
-                processFile(new InputStreamReader(zipInputStream, StandardCharsets.UTF_8),
-                        raisingRequest.getFields(),
-                        raisingRequest.getRowLimit());
+                if ("STREAM".equals(raisingRequest.getMode())) {
+                    stockEtablissementStreamService.processFile(new InputStreamReader(zipInputStream, StandardCharsets.UTF_8),
+                            raisingRequest.getFields(),
+                            raisingRequest.getRowLimit());
+                } else {
+                    stockEtablissementService.processFile(new InputStreamReader(zipInputStream, StandardCharsets.UTF_8),
+                            raisingRequest.getFields(),
+                            raisingRequest.getRowLimit());
+                }
 
                 break; //only one file to manage and stream will be closed with bufferedReader
+
             }
 
         }
@@ -46,18 +58,5 @@ public class RaisingService {
         logger.info("Service : End the raising of data.");
     }
 
-    private void processFile(Reader reader, List<String> fields, Integer rowLimit) throws IOException {
-        BufferedReader bufferedReader = new BufferedReader(reader);
-        String line;
-        boolean limitReached;
-
-        while ((line = bufferedReader.readLine()) != null) {
-            limitReached = stockEtablissementService.processLine(line, fields, rowLimit);
-            if (limitReached) {
-                break;
-            }
-        }
-        bufferedReader.close();
-    }
 
 }

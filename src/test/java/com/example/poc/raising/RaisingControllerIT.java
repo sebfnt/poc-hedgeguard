@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 public class RaisingControllerIT {
 
-    private static final int ROW_LIMIT = 100000;
+    private static final int ROW_LIMIT = 2000000;
     @Autowired
     private MockMvc mockMvc;
 
@@ -38,12 +38,13 @@ public class RaisingControllerIT {
     }
 
     @Test
-    public void shouldReturnDefaultMessage() throws Exception {
+    public void shouldReturnDefaultMessageWhenUseStreamService() throws Exception {
         this.mockMvc.perform(MockMvcRequestBuilders
                         .post("/raising-request")
                         .content(asJsonString(
                                 new RaisingRequest(
                                         Arrays.asList(StockEtablissementEnum.SIREN.header, StockEtablissementEnum.SIRET.header),
+                                        "STREAM",
                                         ROW_LIMIT,
                                         "https://files.data.gouv.fr/insee-sirene/StockEtablissement_utf8.zip")))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -60,5 +61,24 @@ public class RaisingControllerIT {
         assertNotNull(firstRow.getSiren());
         assertNull(firstRow.getActivitePrincipaleEtablissement());
     }
+
+    @Test
+    public void shouldReturnDefaultMessage() throws Exception {
+        this.mockMvc.perform(MockMvcRequestBuilders
+                        .post("/raising-request")
+                        .content(asJsonString(
+                                new RaisingRequest(
+                                        Arrays.asList(StockEtablissementEnum.SIREN.header, StockEtablissementEnum.SIRET.header),
+                                        "NORMAL",
+                                        ROW_LIMIT,
+                                        "https://files.data.gouv.fr/insee-sirene/StockEtablissement_utf8.zip")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").exists())
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("All data raised and stored in DB."));
+
+    }
+
 
 }
